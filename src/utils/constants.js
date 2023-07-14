@@ -6,6 +6,5 @@ const DATABASE_CREDENTIALS = {
   database: process.env.DB_DATABASE,
   password: process.env.DB_PASSWORD
 }
-console.log(process.env, DATABASE_CREDENTIALS)
 
 module.exports = { DATABASE_CREDENTIALS }
