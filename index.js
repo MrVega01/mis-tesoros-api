@@ -13,6 +13,13 @@ app.get('/products', async (req, res, next) => {
   connection.end()
   return res.status(200).json(products)
 })
+app.get('/types', async (req, res, next) => {
+  const connection = await createConnection()
+  const [products] = await connection.execute('SELECT * FROM type')
+    .catch(e => next(e))
+  connection.end()
+  return res.status(200).json(products)
+})
 
 // POST
 app.post('/products', async (req, res, next) => {
@@ -26,9 +33,24 @@ app.post('/products', async (req, res, next) => {
   ) return res.status(400).json({ error: 'Bad request' })
 
   const connection = await createConnection()
-  const { name, price, quantity, type = '' } = product
+  const { name, price, quantity, type_id = null } = product
+  const typeId = isNaN(Number(type_id)) ? null : type_id
+
   await connection
-    .execute(`INSERT INTO products (name, price, type, quantity) VALUES ('${name}', ${price}, '${type}', ${quantity})`)
+    .execute(`INSERT INTO products (name, price, quantity, type_id) VALUES ('${name}', ${price}, ${quantity}, ${typeId})`)
+    .catch(e => next(e))
+  connection.end()
+  return res.status(201).json({ message: 'Product created' })
+})
+app.post('/types', async (req, res, next) => {
+  const typeRequest = req.body
+
+  if (!typeRequest?.type) return res.status(400).json({ error: 'Bad request' })
+
+  const connection = await createConnection()
+  const { type } = typeRequest
+  await connection
+    .execute(`INSERT INTO type (type) VALUES ('${type}')`)
     .catch(e => next(e))
   connection.end()
   return res.status(201).json({ message: 'Product created' })
@@ -49,9 +71,11 @@ app.put('/products/:id', async (req, res, next) => {
   ) return res.status(400).json({ error: 'Bad request' })
 
   const connection = await createConnection()
-  const { name, price, quantity, type = '' } = product
+  const { name, price, quantity, type_id } = product
+  const typeId = isNaN(Number(type_id)) ? null : type_id
+
   await connection
-    .execute(`UPDATE products SET name='${name}', price=${price}, type='${type}', quantity=${quantity} WHERE id=${id}`)
+    .execute(`UPDATE products SET name='${name}', price=${price}, quantity=${quantity}, type_id=${typeId} WHERE id=${id}`)
     .catch(e => next(e))
   connection.end()
   return res.status(201).json({ message: 'Product updated' })
