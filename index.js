@@ -8,7 +8,7 @@ app.use(express.json())
 // GET
 app.get('/products', async (req, res, next) => {
   const connection = await createConnection()
-  const [products] = await connection.execute('SELECT * FROM products')
+  const [products] = await connection.execute('SELECT * FROM products ORDER BY name ASC')
     .catch(e => next(e))
   connection.end()
   return res.status(200).json(products)
