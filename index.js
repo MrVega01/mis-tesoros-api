@@ -1,5 +1,5 @@
-const express = require('express')
-const createConnection = require('./database')
+import express from 'express'
+import { createConnection } from './database.js'
 
 const app = express()
 
@@ -7,18 +7,18 @@ app.use(express.json())
 
 // GET
 app.get('/products', async (req, res, next) => {
-  const connection = await createConnection()
-  const [products] = await connection.execute('SELECT * FROM products ORDER BY name ASC')
+  const connection = createConnection()
+  const result = await connection.execute('SELECT * FROM products ORDER BY name ASC')
     .catch(e => next(e))
-  connection.end()
-  return res.status(200).json(products)
+  connection.close()
+  return res.status(200).json(result.rows)
 })
 app.get('/types', async (req, res, next) => {
   const connection = await createConnection()
-  const [products] = await connection.execute('SELECT * FROM type')
+  const result = await connection.execute('SELECT * FROM types')
     .catch(e => next(e))
-  connection.end()
-  return res.status(200).json(products)
+  connection.close()
+  return res.status(200).json(result.rows)
 })
 
 // POST
@@ -32,14 +32,14 @@ app.post('/products', async (req, res, next) => {
     isNaN(Number(product.quantity))
   ) return res.status(400).json({ error: 'Bad request' })
 
-  const connection = await createConnection()
+  const connection = createConnection()
   const { name, price, quantity, type_id = null } = product
   const typeId = isNaN(Number(type_id)) ? null : type_id
 
   await connection
     .execute(`INSERT INTO products (name, price, quantity, type_id) VALUES ('${name}', ${price}, ${quantity}, ${typeId})`)
     .catch(e => next(e))
-  connection.end()
+  connection.close()
   return res.status(201).json({ message: 'Product created' })
 })
 app.post('/types', async (req, res, next) => {
@@ -47,12 +47,12 @@ app.post('/types', async (req, res, next) => {
 
   if (!typeRequest?.type) return res.status(400).json({ error: 'Bad request' })
 
-  const connection = await createConnection()
+  const connection = createConnection()
   const { type } = typeRequest
   await connection
-    .execute(`INSERT INTO type (type) VALUES ('${type}')`)
+    .execute(`INSERT INTO types (type) VALUES ('${type}')`)
     .catch(e => next(e))
-  connection.end()
+  connection.close()
   return res.status(201).json({ message: 'Product created' })
 })
 
@@ -70,14 +70,14 @@ app.put('/products/:id', async (req, res, next) => {
     isNaN(Number(product.quantity))
   ) return res.status(400).json({ error: 'Bad request' })
 
-  const connection = await createConnection()
+  const connection = createConnection()
   const { name, price, quantity, type_id } = product
   const typeId = isNaN(Number(type_id)) ? null : type_id
 
   await connection
     .execute(`UPDATE products SET name='${name}', price=${price}, quantity=${quantity}, type_id=${typeId} WHERE id=${id}`)
     .catch(e => next(e))
-  connection.end()
+  connection.close()
   return res.status(201).json({ message: 'Product updated' })
 })
 
@@ -91,7 +91,7 @@ app.delete('/products/:id', async (req, res, next) => {
   await connection
     .execute(`DELETE FROM products WHERE id=${id}`)
     .catch(e => next(e))
-  connection.end()
+  connection.close()
   return res.status(204).json({ message: 'Product deleted' })
 })
 

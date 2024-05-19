@@ -1,10 +1,7 @@
-require('dotenv').config()
+import { configDotenv } from 'dotenv'
+configDotenv()
 
-const DATABASE_CREDENTIALS = {
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  database: process.env.DB_DATABASE,
-  password: process.env.DB_PASSWORD
+export const DATABASE_CREDENTIALS = {
+  url: process.env.DB_URL,
+  authToken: process.env.DB_AUTH_TOKEN
 }
-
-module.exports = { DATABASE_CREDENTIALS }

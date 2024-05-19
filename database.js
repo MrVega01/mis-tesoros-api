@@ -1,8 +1,11 @@
-const mysql = require('mysql2/promise')
-const { DATABASE_CREDENTIALS } = require('./src/utils/constants')
+import { createClient } from '@libsql/client'
+import { DATABASE_CREDENTIALS } from './src/utils/constants.js'
 
-const createConnection = async () => {
-  return await mysql.createConnection(DATABASE_CREDENTIALS)
+const createConnection = () => {
+  const client = createClient(DATABASE_CREDENTIALS)
+  return client
 }
 
-module.exports = createConnection
+export {
+  createConnection
+}
