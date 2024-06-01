@@ -1,9 +1,11 @@
 import express from 'express'
 import { createConnection } from './database.js'
+import cors from 'cors'
 
 const app = express()
 
 app.use(express.json())
+app.use(cors())
 
 // GET
 app.get('/products', async (req, res, next) => {
