@@ -1,9 +1,11 @@
 import express from 'express'
 import { createConnection } from './database.js'
+import cors from 'cors'
 
 const app = express()
 
 app.use(express.json())
+app.use(cors())
 
 // GET
 app.get('/products', async (req, res, next) => {
@@ -33,11 +35,14 @@ app.post('/products', async (req, res, next) => {
   ) return res.status(400).json({ error: 'Bad request' })
 
   const connection = createConnection()
-  const { name, price, quantity, type_id = null } = product
-  const typeId = isNaN(Number(type_id)) ? null : type_id
+  const { name, price, quantity, type_id: type = null } = product
+  const typeId = isNaN(Number(type)) ? null : type
 
   await connection
-    .execute(`INSERT INTO products (name, price, quantity, type_id) VALUES ('${name}', ${price}, ${quantity}, ${typeId})`)
+    .execute({
+      sql: 'INSERT INTO products (name, price, quantity, type_id) VALUES ($name, $price, $quantity, $typeId)',
+      args: { name, price, quantity, typeId }
+    })
     .catch(e => next(e))
   connection.close()
   return res.status(201).json({ message: 'Product created' })
@@ -50,7 +55,10 @@ app.post('/types', async (req, res, next) => {
   const connection = createConnection()
   const { type } = typeRequest
   await connection
-    .execute(`INSERT INTO types (type) VALUES ('${type}')`)
+    .execute({
+      sql: 'INSERT INTO types (type) VALUES ($type)',
+      args: { type }
+    })
     .catch(e => next(e))
   connection.close()
   return res.status(201).json({ message: 'Product created' })
@@ -71,14 +79,34 @@ app.put('/products/:id', async (req, res, next) => {
   ) return res.status(400).json({ error: 'Bad request' })
 
   const connection = createConnection()
-  const { name, price, quantity, type_id } = product
-  const typeId = isNaN(Number(type_id)) ? null : type_id
+  const { name, price, quantity, type_id: type } = product
+  const typeId = isNaN(Number(type)) ? null : type
 
   await connection
-    .execute(`UPDATE products SET name='${name}', price=${price}, quantity=${quantity}, type_id=${typeId} WHERE id=${id}`)
+    .execute({
+      sql: 'UPDATE products SET name = $name, price = $price, quantity = $quantity, type_id = $typeId WHERE id = $id',
+      args: { name, price, quantity, typeId, id }
+    })
     .catch(e => next(e))
   connection.close()
   return res.status(201).json({ message: 'Product updated' })
+})
+
+app.put('/types/:id', async (req, res, next) => {
+  const id = req.params.id
+  const { type } = req.body || {}
+
+  if (!id || !type) return res.status(400).json({ error: 'Bad request' })
+
+  const connection = createConnection()
+  await connection
+    .execute({
+      sql: 'UPDATE types SET type = $type WHERE id = $id',
+      args: { id, type }
+    })
+    .catch(e => next(e))
+  connection.close()
+  return res.status(201).json({ message: 'Type updated' })
 })
 
 // DELETE
@@ -93,6 +121,18 @@ app.delete('/products/:id', async (req, res, next) => {
     .catch(e => next(e))
   connection.close()
   return res.status(204).json({ message: 'Product deleted' })
+})
+app.delete('/types/:id', async (req, res, next) => {
+  const id = req.params.id
+
+  if (!id || isNaN(Number(id))) return res.status(400).json({ error: 'Bad request' })
+
+  const connection = await createConnection()
+  await connection
+    .execute(`DELETE FROM types WHERE id=${id}`)
+    .catch(e => next(e))
+  connection.close()
+  return res.status(204).json({ message: 'Type deleted' })
 })
 
 // SERVER
