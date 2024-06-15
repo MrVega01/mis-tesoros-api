@@ -65,6 +65,26 @@ app.post('/types', async (req, res, next) => {
 })
 
 // PUT
+app.put('/products/sale', async (req, res, next) => {
+  const quantityList = req.body
+  if (!quantityList?.length) return res.status(400).json({ error: 'Bad request' })
+  const statements = quantityList.map(({ id, quantity }) => {
+    if (!id || !quantity) return null
+    return {
+      sql: 'UPDATE products SET quantity = $quantity WHERE id = $id',
+      args: { quantity, id }
+    }
+  }).filter(statement => statement)
+
+  const connection = createConnection()
+  const a = await connection
+    .batch(statements, 'write')
+    .catch(e => next(e))
+  console.log(a, statements)
+  connection.close()
+  return res.status(201).json({ message: 'Sales registered' })
+})
+
 app.put('/products/:id', async (req, res, next) => {
   const id = req.params.id
   const product = req.body
